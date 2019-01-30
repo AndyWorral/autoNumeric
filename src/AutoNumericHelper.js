@@ -1008,9 +1008,9 @@ export default class AutoNumericHelper {
 
         if (result.match(/[٠١٢٣٤٥٦٧٨٩۴۵۶]/g) === null) {
             // If no Arabic/Persian numbers are found, return the numeric string or number directly
-            if (returnANumber) {
-                result = Number(result);
-            }
+            // if (returnANumber) {
+            //     result = result; // No idea if removing Number(..) here hurt other things but it is prematurely breaking the string
+            // }
 
             return result;
         }

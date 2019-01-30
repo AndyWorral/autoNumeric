@@ -4076,6 +4076,15 @@ export default class AutoNumeric {
         if (!AutoNumericHelper.isTrueOrFalseString(options.createLocalList) && !AutoNumericHelper.isBoolean(options.createLocalList)) {
             AutoNumericHelper.throwError(`The debug option 'createLocalList' is invalid ; it should be either 'false' or 'true', [${options.createLocalList}] given.`);
         }
+        
+        // Review settings for min/max JS number values so we don't loose data
+        if (options.minimumValue.replace('.','').length > 16) {
+            AutoNumericHelper.throwError(`The option 'minimumValue' has too high of precision.  JS can't handle more then 16 digits.  Please redue either the whole number or decimal precision, [${options.minimumValue}] given.`);
+        }
+
+        if (options.maximumValue.replace('.','').length > 16) {
+            AutoNumericHelper.throwError(`The option 'maximumValue' has too high of precision.  JS can't handle more then 16 digits.  Please redue either the whole number or decimal precision, [${options.maximumValue}] given.`);
+        }
     }
 
     /**
@@ -7256,6 +7265,22 @@ To solve that, you'd need to either set \`decimalPlacesRawValue\` to \`null\`, o
             this.domElement.setAttribute('value', currentValue);
         }
 
+        const result = this.constructor._convertToNumericString(currentValue.toString(), this.settings).replace('.','');
+        if (result.length > 15) {
+            if (result.length > 16) {
+                alert('Value being used is too long, please see console');
+                /* eslint no-console: 0 */
+                console.log('Please review value being used for element (too long)', currentValue, this.domElement, this);
+                this.domElement.style.border = '1px solid red';
+            }
+            else if (!Number.isSafeInteger(parseInt(result,10))) {
+                alert('Value being used is not a valid js number, please see console');
+                /* eslint no-console: 0 */
+                console.log('Please review value being used for element (invalid Number)', currentValue, this.domElement, this);
+                this.domElement.style.border = '1px solid red';
+            }
+        }
+
         if (this.isInputElement || this.isContentEditable) {
             /*
              * If the input value has been set by the dev, but not directly as an attribute in the html, then it takes
@@ -7866,7 +7891,8 @@ To solve that, you'd need to either set \`decimalPlacesRawValue\` to \`null\`, o
     static _toNumericValue(value, settings) {
         //XXX Note; this function is static since we need to pass a `settings` object when calling the static `AutoNumeric.format()` method
         let result;
-        if (AutoNumericHelper.isNumber(Number(value))) {
+
+        if (settings.decimalCharacter === '.' && AutoNumericHelper.isNumber(Number(value))) {
             // The value has either already been stripped, or a 'real' javascript number is passed as a parameter
             result = value;
         } else {
